@@ -1,0 +1,45 @@
+* {
+    font-family: Ubuntu, "Noto Sans", "Fira Sans", serif;
+    color: #333333;
+    font-size: 14px;
+}
+
+body {
+    background: #EEEEEE;
+}
+
+button {
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    background: #AAAAAA;
+}
+
+section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    &.welcome {
+        & img {
+            height: 35vh;
+            aspect-ratio: 1;
+        }
+
+        & h1 {
+            font-size: 24px;
+        }
+
+        & h2 {
+            font-size: 18px;
+        }
+    }
+
+    &.permissions {
+        & .permission {
+            & button {
+                margin-left: 15px;
+            }
+        }
+    }
+}

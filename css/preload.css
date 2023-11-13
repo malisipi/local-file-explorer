@@ -1,0 +1,11 @@
+body:has(div#parentDirLinkBox[style*="block"] > a#parentDirLink[class][href] > span#parentDirText){
+    background: #EEEEEE;
+    
+    @media (prefers-color-scheme: dark) {
+        background: #333333;
+    }
+
+    & * {
+        display: none;
+    }
+}
