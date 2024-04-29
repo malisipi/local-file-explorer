@@ -401,7 +401,7 @@ lfe = async (the_browser) => {
 
     window.search_file = (file_name) => {
         if(file_name == "") return (_search_style.innerHTML = "");
-        _search_style.innerHTML = `.filePreview:not(:is([search_index *= "${file_name?.toLowerCase()}"], [search_index *= "${file_name?.toLocaleLowerCase()}"])) {
+        _search_style.textContent = `.filePreview:not(:is([search_index *= "${file_name?.toLowerCase()}"], [search_index *= "${file_name?.toLocaleLowerCase()}"])) {
             display: none;
         }`;
     };
