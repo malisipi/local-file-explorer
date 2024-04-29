@@ -1,4 +1,4 @@
-lfe = async () => {
+lfe = async (the_browser) => {
     window.lfe_config = {
         set: async (key, value) => {
             lfe_config[key] = value;
@@ -12,6 +12,7 @@ lfe = async () => {
     lfe_config.folder_view = await lfe_config.get("folder_view") ?? 0; // 0:grid, 1:list
     lfe_config.zoom_level = await lfe_config.get("zoom_level") ?? 2; // 0:tiny, 1:small, 2:medium, 3:large, 4:huge
     lfe_config.use_preview_of_images = await lfe_config.get("use_preview_of_images") ?? false;
+    lfe_config.use_native_icons = await lfe_config.get("use_native_icons") ?? false;
 
     document.addEventListener("keydown", e => {
         if (e.ctrlKey){
@@ -44,7 +45,7 @@ lfe = async () => {
             return obj;
         },{});
     };
-    
+
     window.get_human_readable_size = size => {
         let power = Math.floor(Math.log((size > 0) ? size : 1) / Math.log(1024));
         return `${(size / Math.pow(1024, power)).toFixed(Math.min(2, power))} ${["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB", "BB", "GeB"][power]}`;
@@ -304,6 +305,15 @@ lfe = async () => {
         }
     }
 
+    window.get_native_icon = (name) => {
+        let extension = name.split(".").at(-1).toLowerCase();
+        if(the_browser == "firefox"){
+            return `moz-icon://.${extension}?size=255`;
+        }
+        console.error("Native icons is not supported outside Firefox");
+        return window.mimetype_prefix + "text-x-preview.png";
+    };
+
     window.get_icon = (file_type) => {
         switch(file_type){
             case "image":
@@ -388,15 +398,15 @@ lfe = async () => {
                 return window.mimetype_prefix + "text-x-preview.png";
         }
     }
-    
+
     window.search_file = (file_name) => {
-        if(file_name == "") return (_search_style.innerHTML = ""); 
+        if(file_name == "") return (_search_style.innerHTML = "");
         _search_style.innerHTML = `.filePreview:not(:is([search_index *= "${file_name?.toLowerCase()}"], [search_index *= "${file_name?.toLocaleLowerCase()}"])) {
             display: none;
         }`;
     };
-    
-    window.is_os_windows = navigator.userAgentData.platform == "Windows";
+
+    window.is_os_windows = (!!navigator.userAgentData) ? navigator.userAgentData.platform == "Windows" : navigator.userAgent.includes("Win");
     window.mimetype_prefix = chrome.runtime.getURL("assets/mimetypes/");
 
     let new_head = document.createElement("head");
@@ -416,7 +426,7 @@ lfe = async () => {
     window.control_bar = document.createElement("div");
     control_bar.className = "controlBar actionBar";
     new_body.append(control_bar);
-    
+
     [
         {
             title: "Preferences",
@@ -458,7 +468,7 @@ lfe = async () => {
         control_bar.append(_control);
         _control.title = e.title;
         _control.addEventListener("click", e.function);
-        
+
         let _icon = document.createElement("img");
         _icon.className = "controlIcon";
         _icon.setAttribute("draggable", false);
@@ -500,6 +510,12 @@ lfe = async () => {
                         "type": "switch",
                         "title": "Use images instead of file icon",
                         "details": "Enabling this setting, will slow down loading folders that has a lot of images, high-resolution images or animated images. Also the setting can cause ratio issue on folder view."
+                    },
+                    {
+                        "code": "use_native_icons",
+                        "type": "switch",
+                        "title": "Use system icons for previews",
+                        "targets": ["firefox"]
                     }
                 ]
             },
@@ -560,6 +576,9 @@ lfe = async () => {
                 controls.className = "dialogOptions";
                 preferences.append(controls);
                 section.controls.forEach(controller => {
+                    // If there's a controller than supports only specific browsers, hide them in other browsers
+                    if(!!controller.targets && !controller.targets.includes(the_browser)) return;
+
                     let container = document.createElement("div");
                     container.className = "dialogOption";
                     controls.append(container);
@@ -658,44 +677,44 @@ lfe = async () => {
         clearInterval(navigation_bar_scroll.handler);
     });
     new_body.append(navigation_bar);
-    
+
     window.preview_view = document.createElement("div");
     preview_view.className = "previewView";
     new_body.append(preview_view);
-    
+
     let preview_title = document.createElement("div");
     preview_title.className = "previewTitle";
     preview_view.append(preview_title);
-    
+
     window.preview_icon = document.createElement("img");
     preview_icon.setAttribute("draggable", false);
     preview_icon.className = "previewIcon";
     preview_title.append(preview_icon);
-    
+
     window.preview_name = document.createElement("div");
     preview_name.className = "previewName";
     preview_title.append(preview_name);
-    
+
     window.preview_viewer = document.createElement("iframe");
     preview_viewer.className = "previewViewer default";
     preview_viewer.setAttribute("sandbox", "");
     preview_view.append(preview_viewer);
-    
+
     window.preview_media_viewer = document.createElement("video");
     preview_media_viewer.className = "previewViewer media";
     preview_media_viewer.controls = true;
     preview_media_viewer.autoplay = true;
     preview_view.append(preview_media_viewer);
-    
+
     window.preview_pdf_viewer = document.createElement("iframe");
     preview_pdf_viewer.className = "previewViewer pdf";
     preview_view.append(preview_pdf_viewer);
-    
+
     window.preview_image_viewer = document.createElement("img");
     preview_image_viewer.className = "previewViewer image";
     preview_image_viewer.setAttribute("draggable", false);
     preview_view.append(preview_image_viewer);
-    
+
     window.preview_info = document.createElement("div");
     preview_info.className = "previewInfo";
     preview_view.append(preview_info);
@@ -712,7 +731,7 @@ lfe = async () => {
     window.search_dialog = document.createElement("div");
     search_dialog.className = "dialog search";
     new_body.append(search_dialog);
-    
+
     window.search_dialog_input = document.createElement("input");
     search_dialog_input.className = "dialogInput";
     search_dialog_input.addEventListener("input", e => {
@@ -735,8 +754,14 @@ lfe = async () => {
     search_dialog_action.append(search_dialog_action_icon);
 
     let info = {
-        file_list: Array.from(document.querySelectorAll("tr")).slice(1),
         path: location.href.replace("file://","")
+    };
+    if(the_browser == "chrome") {
+        info.file_list = Array.from(document.querySelectorAll("tr")).slice(1);
+    } else if(the_browser == "firefox") {
+        info.file_list = (await (await fetch(location.href)).text()).split("\n").filter(file=>file.startsWith("201:")).map(file=>file.replace(/[0-9]*:/,"").trim().split(" "));
+    } else {
+        throw Error("Unsupported Browser");
     };
     _title.innerText = decodeURI(info.path);
     info.locations = info.path.match(/[^\/]*\//g);
@@ -763,7 +788,7 @@ lfe = async () => {
             --bg-color: #111111;
             --color-scheme: dark;
         }
-        
+
         background: var(--bg-color);
     }
 
@@ -775,7 +800,7 @@ lfe = async () => {
         min-height: 0;
         border-radius: var(--border-radius);
     }
-    
+
     input[switch_mode="true"]:after {
         position: absolute;
         content: "";
@@ -786,7 +811,7 @@ lfe = async () => {
         transform: translate(-10px, -5px);
         transition-duration: var(--transition-duration);
     }
-    
+
     input[switch_mode="true"]:checked:after {
         transform: translate(20px, -5px);
     }
@@ -799,7 +824,7 @@ lfe = async () => {
         height: 60px;
         padding: 5px 20px;
         box-sizing: border-box;
-        
+
         .navigationLocation {
             min-width: 50px;
             padding: 0 30px;
@@ -808,7 +833,7 @@ lfe = async () => {
             color: var(--text-color);
         }
     }
-    
+
     .controlBar {
         position: fixed;
         top: 0;
@@ -818,10 +843,10 @@ lfe = async () => {
         padding: 5px;
         box-sizing: border-box;
         justify-content: center;
-        
+
         .control {
             aspect-ratio: 1;
-            
+
             .controlIcon {
                 aspect-ratio: 1;
                 height: 32px;
@@ -829,8 +854,8 @@ lfe = async () => {
             }
         }
     }
-    
-    .previewView {    
+
+    .previewView {
         position: fixed;
         right: 25px;
         top: 85px;
@@ -841,31 +866,31 @@ lfe = async () => {
         display: flex;
         flex-direction: column;
         user-select: none;
-        
+
         &:not([open]){
             display: none;
         }
-        
+
         .previewTitle {
             display: flex;
             align-items: center;
             width: 100%;
             height: 80px;
             user-select: text;
-            
+
             & * {
                 padding: 0 15px;
             }
-            
+
             .previewIcon {
                 height: 64px;
             }
-            
+
             .previewName {
                 color: var(--text-color);
             }
         }
-        
+
         .previewViewer {
             height: 0;
             flex-grow: 1;
@@ -880,29 +905,29 @@ lfe = async () => {
             padding: 8px 20px;
             box-sizing: border-box;
         }
-        
+
         &[open="media"] .previewViewer.media {
             display: unset;
             color-scheme: var(--color-scheme);
         }
-        
+
         &[open="image"] .previewViewer.image {
             object-fit: contain;
             image-rendering: pixelated;
             display: unset;
         }
-        
+
         &[open="pdf"] .previewViewer.pdf {
             object-fit: contain;
             image-rendering: pixelated;
             display: unset;
         }
-        
+
         &[open="default"] .previewViewer.default {
             display: unset;
         }
     }
-    
+
     .actionBar {
         display: flex;
         user-select: none;
@@ -920,19 +945,19 @@ lfe = async () => {
             align-items: center;
             justify-content: center;
             transition-duration: var(--transition-duration);
-            
+
             &:first-child {
                 border-radius: var(--border-radius) 0 0 var(--border-radius);
-                
+
                 &:last-child {
                     border-radius: var(--border-radius);
                 }
             }
-            
+
             &:last-child {
                 border-radius: 0 var(--border-radius) var(--border-radius) 0;
             }
-            
+
             &:hover {
                 background: var(--hover-color);
             }
@@ -956,7 +981,7 @@ lfe = async () => {
         :is(body):has(.previewView[open]) & {
             right: calc(var(--panel-size) + 50px);
         }
-        
+
         .filePreview {
             display: flex;
             flex-direction: column;
@@ -964,19 +989,19 @@ lfe = async () => {
             padding: 5px;
             border-radius: var(--border-radius);
             transition-duration: var(--transition-duration);
-            
+
             &:hover {
                 background: var(--hover-color);
             }
-            
+
             &:focus {
                 background: var(--select-color);
             }
-            
+
             .fileIcon {
                 pointer-events: none;
             }
-            
+
             .fileName {
                 flex-grow: 1;
                 overflow-wrap: anywhere;
@@ -997,7 +1022,7 @@ lfe = async () => {
             .fileIcon {
                 width: 32px;
             }
-            
+
             .fileName {
                 font-size: x-small;
             }
@@ -1013,7 +1038,7 @@ lfe = async () => {
             .fileIcon {
                 width: 48px;
             }
-            
+
             .fileName {
                 font-size: small;
             }
@@ -1029,7 +1054,7 @@ lfe = async () => {
             .fileIcon {
                 width: 64px;
             }
-            
+
             .fileName {
                 font-size: medium;
             }
@@ -1045,7 +1070,7 @@ lfe = async () => {
             .fileIcon {
                 width: 64px;
             }
-            
+
             .fileName {
                 font-size: large;
             }
@@ -1060,7 +1085,7 @@ lfe = async () => {
             .fileIcon {
                 width: 128px;
             }
-            
+
             .fileName {
                 font-size: x-large;
             }
@@ -1084,7 +1109,7 @@ lfe = async () => {
         &:not([visible]) {
             display: none;
         }
-        
+
         &.search {
             right: 25px;
             top: 0px;
@@ -1163,7 +1188,7 @@ lfe = async () => {
                 &:last-child {
                     border-radius: 0 0 var(--border-radius) var(--border-radius);
                 }
-                
+
                 .optionName {
                     display: flex;
                     flex-direction: column;
@@ -1190,7 +1215,7 @@ lfe = async () => {
                     &:is(input[type="checkbox"][switch_mode="true"]){
                         transform: translate(-10px, 0);
                     }
-                    
+
                     &:is(div, input[type="button"]) {
                         display: flex;
                         justify-content: center;
@@ -1232,17 +1257,32 @@ lfe = async () => {
         let file_info = {
             __node: info.file_list[file_index]
         };
-        file_info.__details = file_info.__node.querySelectorAll("td");
-        file_info.__link = file_info.__node.querySelector("a");
-        file_info.href = file_info.__link.href;
-        file_info.is_folder = file_info.__link.className == "icon dir";
-        file_info.name = file_info.__details[0].getAttribute("data-value");
-        if(file_info.is_folder) file_info.name = file_info.name.slice(0,-1);
+        if(the_browser == "chrome"){
+            file_info.__details = file_info.__node.querySelectorAll("td");
+            file_info.__link = file_info.__node.querySelector("a");
+            file_info.href = file_info.__link.href;
+            file_info.is_folder = file_info.__link.className == "icon dir";
+            file_info.name = file_info.__details[0].getAttribute("data-value");
+            if(file_info.is_folder) file_info.name = file_info.name.slice(0,-1);
+            file_info.size = file_info.__details[1].getAttribute("data-value");
+            file_info.time = file_info.__details[2].getAttribute("data-value");
+        } else if (the_browser == "firefox") {
+            file_info.name = decodeURIComponent(file_info.__node[0]);
+            file_info.href = location.href + "/" + file_info.__node[0] + "/";
+            file_info.href = file_info.href.replace(/[\/]{2,}/g,"/").replaceAll("./","");
+            file_info.is_folder = file_info.__node[3] == "DIRECTORY";
+            file_info.time = Number((new Date(decodeURIComponent(file_info.__node[2]))).getTime() / 1000);
+            file_info.size = Number(file_info.__node[1]);
+        } else {
+            throw Error("Unsupported Browser");
+        };
         file_info.type = window.get_file_type(file_info.name, file_info.is_folder);
-        file_info.size = file_info.__details[1].getAttribute("data-value");
-        file_info.time = file_info.__details[2].getAttribute("data-value");
-        file_info.icon = window.get_icon(file_info.type);
-        
+        if(file_info.type != "folder" && the_browser == "firefox" && lfe_config.use_native_icons){
+            file_info.icon = window.get_native_icon(file_info.name);
+        } else {
+            file_info.icon = window.get_icon(file_info.type);
+        }
+
         let file_preview = document.createElement("div");
         file_preview.className = "filePreview";
         file_preview.tabIndex = 0;
@@ -1290,7 +1330,7 @@ lfe = async () => {
                             transform: translate(-50%, 0);
                             width: 80px;
                         }
-                        
+
                         h1 {
                             position: fixed;
                             top: 125px;
@@ -1300,7 +1340,7 @@ lfe = async () => {
                             font-size: large;
                             text-align: center;
                         }
-                        
+
                         * {
                             user-select: none;
                         }
@@ -1322,7 +1362,7 @@ lfe = async () => {
         file_preview.addEventListener("dblclick", (e) => {
             location.href = JSON.parse(e.target.getAttribute("properties")).href;
         });
-        
+
         let file_icon = document.createElement("img");
         file_icon.className = "fileIcon";
         file_icon.setAttribute("draggable", false);
@@ -1332,7 +1372,7 @@ lfe = async () => {
             file_icon.src = file_info.icon;
         }
         file_preview.append(file_icon);
-        
+
         let file_name = document.createElement("span");
         file_name.className = "fileName";
         file_name.innerText = file_info.name;
@@ -1344,4 +1384,5 @@ lfe = async () => {
     document.body.replaceWith(new_body);
 };
 
-if(document.querySelector("#parentDirLinkBox")) lfe();
+if(!!document.querySelector("#parentDirLinkBox")) lfe("chrome");
+if(!!document.querySelector("link[rel='stylesheet'][href*='dirListing']")) lfe("firefox");

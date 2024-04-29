@@ -1,0 +1,9 @@
+# Ignore manifest
+# I will add manifest_xxx.json for all browser vendors.
+manifest.json
+
+# Ignore browser extensions
+
+*.xpi
+*.zip
+*.crx

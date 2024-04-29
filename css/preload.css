@@ -1,6 +1,7 @@
-body:has(div#parentDirLinkBox[style*="block"] > a#parentDirLink[class][href] > span#parentDirText){
+body:has(div#parentDirLinkBox[style*="block"] > a#parentDirLink[class][href] > span#parentDirText),
+html:has(link[rel="stylesheet"][href*="dirListing"]){
     background: #EEEEEE;
-    
+
     @media (prefers-color-scheme: dark) {
         background: #333333;
     }
