@@ -31,8 +31,7 @@
 	"browser_specific_settings": {
 		"gecko": {
 			"id": "local-file-explorer@malisipi.github.io",
-			"strict_min_version": "121.0",
-			"strict_max_version": "*"
+			"strict_min_version": "121.0"
 		}
 	}
 }
