@@ -305,9 +305,10 @@ lfe = async (the_browser) => {
         }
     }
 
-    window.get_native_icon = (name) => {
+    window.get_native_icon = (name, is_folder) => {
         let extension = name.split(".").at(-1).toLowerCase();
         if(the_browser == "firefox"){
+            if(is_folder) return `moz-icon://./?size=255`;
             return `moz-icon://.${extension}?size=255`;
         }
         console.error("Native icons is not supported outside Firefox");
@@ -1277,8 +1278,8 @@ lfe = async (the_browser) => {
             throw Error("Unsupported Browser");
         };
         file_info.type = window.get_file_type(file_info.name, file_info.is_folder);
-        if(file_info.type != "folder" && the_browser == "firefox" && lfe_config.use_native_icons){
-            file_info.icon = window.get_native_icon(file_info.name);
+        if(the_browser == "firefox" && lfe_config.use_native_icons){
+            file_info.icon = window.get_native_icon(file_info.name, file_info.type == "folder");
         } else {
             file_info.icon = window.get_icon(file_info.type);
         }
