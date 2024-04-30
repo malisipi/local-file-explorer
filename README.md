@@ -1,4 +1,4 @@
-# Local File Explorer
+# Local File Explorer <!--[![Mozilla Add-on Rating](https://img.shields.io/amo/rating/local-file-explorer?style=plastic&logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/local-file-explorer/reviews/)-->
 
 ### Don't require leave your web browser to look your files!
 
@@ -8,7 +8,9 @@
 
 </center>
 
-> Local File Explorer is a simple and fast file browser extension for chromium web browsers.
+<a href="https://addons.mozilla.org/addon/local-file-explorer/" target="_blank"><img src="https://blog.mozilla.org/addons/files/2020/04/get-the-addon-fx-apr-2020.svg" height="50px"/></a>
+
+> Local File Explorer is a simple and fast file browser extension for Firefox and Chromium web browsers.
 
 * You can view your folders,
 * Preview your images/videos/musics without opening new tab,
