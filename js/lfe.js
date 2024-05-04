@@ -13,6 +13,7 @@ lfe = async (the_browser) => {
     lfe_config.zoom_level = await lfe_config.get("zoom_level") ?? 2; // 0:tiny, 1:small, 2:medium, 3:large, 4:huge
     lfe_config.use_preview_of_images = await lfe_config.get("use_preview_of_images") ?? false;
     lfe_config.use_native_icons = await lfe_config.get("use_native_icons") ?? false;
+    lfe_config.hide_dot_files = await lfe_config.get("hide_dot_files") ?? false;
 
     document.addEventListener("keydown", e => {
         if (e.ctrlKey){
@@ -517,6 +518,12 @@ lfe = async (the_browser) => {
                         "type": "switch",
                         "title": "Use system icons for previews",
                         "targets": ["firefox"]
+                    },
+                    {
+                        "code": "hide_dot_files",
+                        "type": "switch",
+                        "title": "Hide hidden files",
+                        "details": "The setting will hide hidden files (the files that starts with a dot) in file list. This setting would helps for hiding config files and finding not hidden files."
                     }
                 ]
             },
@@ -1277,6 +1284,8 @@ lfe = async (the_browser) => {
         } else {
             throw Error("Unsupported Browser");
         };
+        if(lfe_config.hide_dot_files && file_info.name.startsWith(".")) continue; // Will skips the file when enabled "hide_dot_files" setting.
+        
         file_info.type = window.get_file_type(file_info.name, file_info.is_folder);
         if(the_browser == "firefox" && lfe_config.use_native_icons){
             file_info.icon = window.get_native_icon(file_info.name, file_info.type == "folder");
