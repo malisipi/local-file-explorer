@@ -564,6 +564,15 @@ lfe = async (the_browser) => {
                         }
                     },
                     {
+                        "title": "You can rate the addon on Mozilla Addons",
+                        "type": "button",
+                        "button_text": "Open Mozilla Addons",
+                        "handler": () => {
+                            window.open("https://addons.mozilla.org/en-US/firefox/addon/local-file-explorer/");
+                        },
+                        "targets": ["firefox"]
+                    },
+                    {
                         "title": "Source code of this project is stored on GitHub",
                         "type": "button",
                         "button_text": "View Source Code in GitHub",
