@@ -698,6 +698,14 @@ lfe = async (the_browser) => {
     window.preview_view = document.createElement("div");
     preview_view.className = "previewView";
     new_body.append(preview_view);
+    /* Panel Resize Handler */
+    let panel_resize_handler = () => {
+        if(preview_view.style.width !== "") {
+            document.body.style.setProperty("--panel-size", preview_view.offsetWidth + "px");
+        }
+    };
+    panel_resize_handler();
+    new ResizeObserver(panel_resize_handler).observe(preview_view);
 
     let preview_title = document.createElement("div");
     preview_title.className = "previewTitle";
@@ -883,6 +891,16 @@ lfe = async (the_browser) => {
         display: flex;
         flex-direction: column;
         user-select: none;
+        /* for resizable preview panel style */
+        resize: horizontal;
+        overflow-x: auto;
+        direction: rtl;
+        max-width: min(calc(100vw - 150px), 90vw);
+        min-width: 275px;
+        & * {
+            direction: ltr;
+        }
+        /* end of resizable preview panel style */
 
         &:not([open]){
             display: none;
