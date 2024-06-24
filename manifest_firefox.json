@@ -1,7 +1,7 @@
 {
 	"name": "Local File Explorer",
 	"description": "Local File Explorer",
-	"version": "2.1.0",
+	"version": "2.1.1",
 	"manifest_version": 2,
 	"icons": {
 		"16": "/assets/app/16.png",
