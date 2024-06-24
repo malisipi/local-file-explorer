@@ -309,7 +309,12 @@ lfe = async (the_browser) => {
     window.get_native_icon = (name, is_folder) => {
         let extension = name.split(".").at(-1).toLowerCase();
         if(the_browser == "firefox"){
-            if(is_folder) return `moz-icon://./?size=255`;
+            if(is_folder){
+                if(navigator.userAgent.toLowerCase().includes("win")){
+                    return "chrome://global/skin/dirListing/folder.png";
+                }
+                return `moz-icon://./?size=255`;
+            }
             return `moz-icon://.${extension}?size=255`;
         }
         console.error("Native icons is not supported outside Firefox");
@@ -793,7 +798,7 @@ lfe = async (the_browser) => {
 
     _style.innerHTML = `
     * {
-        font-family: Ubuntu, "Noto Sans", "Fira Sans", serif;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans", "Fira Sans", "Open Sans", "Helvetica Neue", sans-serif;
     }
 
     body {
